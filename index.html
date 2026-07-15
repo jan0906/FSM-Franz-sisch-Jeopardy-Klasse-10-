@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>🇫🇷 Jeopardy — Français Klasse 10</title>
+<style>
+  :root{
+    --blue:#0055A4;
+    --white:#ffffff;
+    --red:#EF4135;
+    --gold:#FFC93C;
+    --dark:#1a2238;
+  }
+  * { box-sizing: border-box; }
+  body{
+    margin:0;
+    font-family:'Segoe UI', Arial, sans-serif;
+    background:linear-gradient(135deg, var(--blue) 0%, #003b73 50%, var(--dark) 100%);
+    min-height:100vh;
+    color:var(--white);
+    padding:20px;
+  }
+  h1{
+    text-align:center;
+    font-size:2.4em;
+    margin:10px 0 5px 0;
+    text-shadow:2px 2px 6px rgba(0,0,0,0.4);
+  }
+  .subtitle{
+    text-align:center;
+    opacity:0.85;
+    margin-bottom:20px;
+    font-size:1.05em;
+  }
+  .scoreboard{
+    display:flex;
+    justify-content:center;
+    gap:40px;
+    margin-bottom:25px;
+    flex-wrap:wrap;
+  }
+  .team-score{
+    background:rgba(255,255,255,0.12);
+    border:2px solid var(--gold);
+    border-radius:16px;
+    padding:12px 30px;
+    text-align:center;
+    min-width:160px;
+  }
+  .team-score h2{
+    margin:0 0 5px 0;
+    font-size:1.1em;
+  }
+  .team-score .score{
+    font-size:2em;
+    font-weight:bold;
+    color:var(--gold);
+  }
+  .board{
+    display:grid;
+    grid-template-columns:repeat(5, 1fr);
+    gap:8px;
+    max-width:1100px;
+    margin:0 auto;
+  }
+  .category-header{
+    background:var(--red);
+    padding:14px 6px;
+    text-align:center;
+    font-weight:bold;
+    border-radius:10px;
+    font-size:0.95em;
+    box-shadow:0 3px 8px rgba(0,0,0,0.3);
+    min-height:60px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .cell{
+    background:var(--blue);
+    border:2px solid rgba(255,255,255,0.3);
+    border-radius:10px;
+    padding:20px 6px;
+    text-align:center;
+    font-size:1.6em;
+    font-weight:bold;
+    cursor:pointer;
+    color:var(--gold);
+    transition:transform 0.15s, background 0.15s;
+    box-shadow:0 3px 8px rgba(0,0,0,0.3);
+  }
+  .cell:hover{
+    transform:scale(1.05);
+    background:#0066c4;
+  }
+  .cell.used{
+    background:rgba(255,255,255,0.05);
+    color:transparent;
+    cursor:default;
+    box-shadow:none;
+    pointer-events:none;
+  }
+  .controls{
+    display:flex;
+    justify-content:center;
+    margin:30px 0 10px 0;
+  }
+  .reset-btn{
+    background:var(--red);
+    color:white;
+    border:none;
+    padding:12px 28px;
+    border-radius:30px;
+    font-size:1em;
+    font-weight:bold;
+    cursor:pointer;
+    box-shadow:0 3px 10px rgba(0,0,0,0.3);
+  }
+  .reset-btn:hover{ background:#c9331f; }
+
+  /* Modal */
+  .overlay{
+    display:none;
+    position:fixed;
+    top:0; left:0; right:0; bottom:0;
+    background:rgba(0,0,0,0.75);
+    z-index:100;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+  }
+  .overlay.active{ display:flex; }
+  .modal{
+    background:var(--white);
+    color:var(--dark);
+    border-radius:20px;
+    max-width:700px;
+    width:100%;
+    padding:35px;
+    text-align:center;
+    box-shadow:0 10px 40px rgba(0,0,0,0.5);
+  }
+  .modal .points{
+    color:var(--red);
+    font-weight:bold;
+    font-size:1.1em;
+    margin-bottom:10px;
+  }
+  .modal .category-tag{
+    color:var(--blue);
+    font-weight:bold;
+    text-transform:uppercase;
+    font-size:0.85em;
+    letter-spacing:1px;
+    margin-bottom:15px;
+  }
+  .modal .question{
+    font-size:1.3em;
+    margin:15px 0 25px 0;
+    line-height:1.5;
+  }
+  .modal .answer{
+    display:none;
+    background:#f0f7ff;
+    border-radius:12px;
+    padding:18px;
+    font-size:1.15em;
+    margin-bottom:20px;
+    border:2px dashed var(--blue);
+  }
+  .modal .answer.show{ display:block; }
+  .btn{
+    padding:10px 22px;
+    border-radius:25px;
+    border:none;
+    font-size:0.95em;
+    font-weight:bold;
+    cursor:pointer;
+    margin:5px;
+  }
+  .btn-reveal{ background:var(--gold); color:var(--dark); }
+  .btn-close{ background:#ccc; color:var(--dark); }
+  .team-buttons{
+    display:none;
+    margin-top:15px;
+    flex-wrap:wrap;
+    justify-content:center;
+    gap:8px;
+  }
+  .team-buttons.show{ display:flex; }
+  .btn-correct-a{ background:#2e8b57; color:white; }
+  .btn-correct-b{ background:#2e8b57; color:white; }
+  .btn-wrong-a{ background:#b03030; color:white; }
+  .btn-wrong-b{ background:#b03030; color:white; }
+  @media (max-width:800px){
+    .board{ grid-template-columns:repeat(5,1fr); gap:4px; }
+    .cell{ font-size:1em; padding:12px 2px; }
+    .category-header{ font-size:0.7em; padding:8px 2px; min-height:50px; }
+    h1{ font-size:1.6em; }
+  }
+</style>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0055A4">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Franz Jeopardy">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+
+</head>
+<body>
+
+<h1>🇫🇷 Jeopardy — Français, Klasse 10</h1>
+<div class="subtitle">Gesamtschule NRW · Tous ensemble 4 · Letzte Stunde vor den Ferien 🎉</div>
+
+<div class="scoreboard">
+  <div class="team-score">
+    <h2>🔵 Équipe A</h2>
+    <div class="score" id="scoreA">0</div>
+  </div>
+  <div class="team-score">
+    <h2>🔴 Équipe B</h2>
+    <div class="score" id="scoreB">0</div>
+  </div>
+</div>
+
+<div class="board" id="board"></div>
+
+<div class="controls">
+  <button class="reset-btn" onclick="resetGame()">🔄 Spiel zurücksetzen</button>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="category-tag" id="modalCategory"></div>
+    <div class="points" id="modalPoints"></div>
+    <div class="question" id="modalQuestion"></div>
+    <div class="answer" id="modalAnswer"></div>
+    <div id="revealWrap">
+      <button class="btn btn-reveal" onclick="revealAnswer()">💡 Lösung zeigen</button>
+      <button class="btn btn-close" onclick="closeModal()">Schließen</button>
+    </div>
+    <div class="team-buttons" id="teamButtons">
+      <button class="btn btn-correct-a" onclick="scorePoint('A', true)">✅ Team A richtig</button>
+      <button class="btn btn-correct-b" onclick="scorePoint('B', true)">✅ Team B richtig</button>
+      <button class="btn btn-wrong-a" onclick="scorePoint('A', false)">❌ Team A falsch</button>
+      <button class="btn btn-wrong-b" onclick="scorePoint('B', false)">❌ Team B falsch</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const categories = [
+  {
+    name: "📖 Grammatik (Zeiten & Strukturen)",
+    questions: [
+      { points: 100, q: "Bilde den Passé composé von « aller » in der 3. Person Singular feminin (elle).", a: "elle est allée" },
+      { points: 200, q: "Wie lautet das Imparfait von « finir » bei « nous »?", a: "nous finissions" },
+      { points: 300, q: "Ergänze das richtige Relativpronomen (qui, que oder où): « La ville ___ j'habite est très animée. »", a: "où (Ortsangabe)" },
+      { points: 400, q: "Bilde den Superlativ: « C'est ___ restaurant de la ville. » (das beste Restaurant der Stadt, von « bon »)", a: "le meilleur restaurant de la ville (unregelmäßiger Superlativ von « bon »)" },
+      { points: 500, q: "Bilde den Si-Satz (Typ 2): „Wenn ich Zeit hätte, würde ich nach Frankreich reisen.“", a: "Si j'avais le temps, je voyagerais en France. (si + imparfait, + conditionnel présent)" }
+    ]
+  },
+  {
+    name: "📚 Wortschatz",
+    questions: [
+      { points: 100, q: "Nenne einen Ort, den man in einer Stadt findet, auf Französisch (z. B. Rathaus, Markt, Bahnhof).", a: "z. B. la mairie (Rathaus), le marché (Markt), la gare (Bahnhof), l'église (Kirche)" },
+      { points: 200, q: "Übersetze (eine Region vorstellen): „Die Normandie ist eine Region am Meer.“", a: "La Normandie est une région au bord de la mer." },
+      { points: 300, q: "Übersetze (ein Gemälde beschreiben): „Im Vordergrund sieht man eine Frau, im Hintergrund einen See.“", a: "Au premier plan, on voit une femme, à l'arrière-plan, un lac." },
+      { points: 400, q: "Nenne ein Synonym für « content ».", a: "heureux / joyeux" },
+      { points: 500, q: "Übersetze: „Umweltschutz ist mir wichtig, weil ich die Zukunft der nächsten Generation sichern möchte.“", a: "La protection de l'environnement est importante pour moi, parce que je veux assurer l'avenir de la prochaine génération." }
+    ]
+  },
+  {
+    name: "🗺️ Landeskunde",
+    questions: [
+      { points: 100, q: "In welchem Land liegt die Hauptstadt Dakar?", a: "Sénégal (Senegal)" },
+      { points: 200, q: "Wie heißt die französische Nationalhymne?", a: "La Marseillaise" },
+      { points: 300, q: "Nenne zwei offizielle Amtssprachen Belgiens neben Französisch.", a: "Niederländisch (Flämisch) und Deutsch" },
+      { points: 400, q: "Was feiert man am 14. Juli in Frankreich?", a: "Den Nationalfeiertag (Fête Nationale), zur Erinnerung an den Sturm auf die Bastille 1789" },
+      { points: 500, q: "Erkläre kurz, was man unter « la Francophonie » versteht.", a: "Die Gemeinschaft der französischsprachigen Länder und Regionen weltweit, organisiert u. a. in der Organisation internationale de la Francophonie (OIF)" }
+    ]
+  },
+  {
+    name: "🔤 Verben",
+    questions: [
+      { points: 100, q: "Konjugiere « faire » in der 1. Person Plural (nous), Présent.", a: "nous faisons" },
+      { points: 200, q: "Wie lautet das Partizip Perfekt (participe passé) von « prendre »?", a: "pris" },
+      { points: 300, q: "Konjugiere « venir » im Futur simple, 1. Person Singular (je).", a: "je viendrai" },
+      { points: 400, q: "Bilde den Conditionnel présent von « pouvoir », 2. Person Singular (tu).", a: "tu pourrais" },
+      { points: 500, q: "Bilde das Futur simple von « être », 3. Person Plural (ils).", a: "ils seront" }
+    ]
+  },
+  {
+    name: "🎭 Kultur & Alltag",
+    questions: [
+      { points: 100, q: "Wie nennt man den traditionellen Wangenkuss zur Begrüßung in Frankreich?", a: "la bise" },
+      { points: 200, q: "Nenne eine bekannte französische Käsesorte.", a: "z. B. Camembert, Brie, Roquefort" },
+      { points: 300, q: "Wie heißt das französische Musikfestival, das jährlich am 21. Juni überall im Land stattfindet?", a: "La Fête de la Musique" },
+      { points: 400, q: "Was isst man traditionell am 6. Januar in Frankreich, dem Dreikönigstag?", a: "la galette des rois" },
+      { points: 500, q: "Nenne eine bekannte frankophone Sängerin oder einen Sänger und einen ihrer/seiner Songs.", a: "z. B. Stromae – « Alors on danse », Zaz – « Je veux », Indila – « Dernière Danse »" }
+    ]
+  }
+];
+
+let scores = { A: 0, B: 0 };
+let currentCell = null;
+
+function buildBoard(){
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+
+  categories.forEach(cat => {
+    const header = document.createElement('div');
+    header.className = 'category-header';
+    header.textContent = cat.name;
+    board.appendChild(header);
+  });
+
+  for(let row = 0; row < 5; row++){
+    categories.forEach((cat, catIndex) => {
+      const q = cat.questions[row];
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.textContent = q.points;
+      cell.id = `cell-${catIndex}-${row}`;
+      cell.onclick = () => openQuestion(catIndex, row);
+      board.appendChild(cell);
+    });
+  }
+}
+
+function openQuestion(catIndex, row){
+  const cat = categories[catIndex];
+  const q = cat.questions[row];
+  currentCell = { catIndex, row };
+
+  document.getElementById('modalCategory').textContent = cat.name;
+  document.getElementById('modalPoints').textContent = q.points + ' Punkte';
+  document.getElementById('modalQuestion').textContent = q.q;
+  document.getElementById('modalAnswer').textContent = q.a;
+  document.getElementById('modalAnswer').classList.remove('show');
+  document.getElementById('revealWrap').style.display = 'block';
+  document.getElementById('teamButtons').classList.remove('show');
+
+  document.getElementById('overlay').classList.add('active');
+}
+
+function revealAnswer(){
+  document.getElementById('modalAnswer').classList.add('show');
+  document.getElementById('revealWrap').style.display = 'none';
+  document.getElementById('teamButtons').classList.add('show');
+}
+
+function scorePoint(team, correct){
+  const { catIndex, row } = currentCell;
+  const points = categories[catIndex].questions[row].points;
+
+  if(correct){
+    scores[team] += points;
+  } else {
+    scores[team] -= points;
+  }
+
+  document.getElementById('scoreA').textContent = scores.A;
+  document.getElementById('scoreB').textContent = scores.B;
+
+  document.getElementById(`cell-${catIndex}-${row}`).classList.add('used');
+  closeModal();
+}
+
+function closeModal(){
+  document.getElementById('overlay').classList.remove('active');
+  currentCell = null;
+}
+
+function resetGame(){
+  scores = { A: 0, B: 0 };
+  document.getElementById('scoreA').textContent = 0;
+  document.getElementById('scoreB').textContent = 0;
+  buildBoard();
+}
+
+buildBoard();
+</script>
+
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./service-worker.js').catch(console.error);
+  });
+}
+</script>
+
+</body>
+</html>
